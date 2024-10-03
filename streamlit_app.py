@@ -53,44 +53,55 @@ st.sidebar.button("Messages")
 st.sidebar.button("Favorites")
 st.sidebar.button("Settings")
 st.sidebar.button("Logout")
+st.sidebar.text_input("Search...", "")
 
 # Main content
 st.title("EV Detection Dashboard")
 
-# Date range selector
-st.sidebar.subheader("Select Date Range")
-date_option = st.sidebar.selectbox(
-    "Choose a date range",
-    ("Custom", "Last 24 Hours", "Last 7 Days", "Last 14 Days", "Last 30 Days", "Last 6 Months")
-)
+# Date range selector in main content
+col1, col2 = st.columns([2, 1])
 
-end_date = datetime.now()
+with col1:
+    st.subheader("Select Date Range")
+    date_option = st.selectbox(
+        "Choose a date range",
+        ("Custom", "Last 24 Hours", "Last 7 Days", "Last 14 Days", "Last 30 Days", "Last 6 Months")
+    )
 
-if date_option == "Custom":
-    start_date = st.sidebar.date_input("Start date", end_date - timedelta(days=30))
-    end_date = st.sidebar.date_input("End date", end_date)
-    if start_date > end_date:
-        st.sidebar.error("Error: End date must be after start date.")
-else:
-    if date_option == "Last 24 Hours":
-        start_date = end_date - timedelta(hours=24)
-    elif date_option == "Last 7 Days":
-        start_date = end_date - timedelta(days=7)
-    elif date_option == "Last 14 Days":
-        start_date = end_date - timedelta(days=14)
-    elif date_option == "Last 30 Days":
-        start_date = end_date - timedelta(days=30)
-    else:  # Last 6 Months
-        start_date = end_date - timedelta(days=180)
+    end_date = datetime.now()
+
+    if date_option == "Custom":
+        start_date = st.date_input("Start date", end_date - timedelta(days=30))
+        end_date = st.date_input("End date", end_date)
+        if start_date > end_date:
+            st.error("Error: End date must be after start date.")
+    else:
+        if date_option == "Last 24 Hours":
+            start_date = end_date - timedelta(hours=24)
+        elif date_option == "Last 7 Days":
+            start_date = end_date - timedelta(days=7)
+        elif date_option == "Last 14 Days":
+            start_date = end_date - timedelta(days=14)
+        elif date_option == "Last 30 Days":
+            start_date = end_date - timedelta(days=30)
+        else:  # Last 6 Months
+            start_date = end_date - timedelta(days=180)
+
+with col2:
+    st.subheader("Notifications")
+    st.info("New EV model detected")
+    st.info("Detection rate increased")
+    st.info("Weekly report available")
 
 # Generate data based on selected date range
 df = generate_data(start_date, end_date)
 
 # Display metrics
-total_detections = df['value'].sum()
-avg_detections = df['value'].mean()
-st.metric("Total Detections", f"{total_detections:,}")
-st.metric("Average Daily Detections", f"{avg_detections:.2f}")
+col1, col2 = st.columns(2)
+with col1:
+    st.metric("Total Detections", f"{df['value'].sum():,}")
+with col2:
+    st.metric("Average Daily Detections", f"{df['value'].mean():.2f}")
 
 # EV Detections Trend
 st.subheader("EV Detections Trend")
@@ -114,14 +125,5 @@ top_models = pd.DataFrame({
 })
 fig_pie = px.pie(top_models, values='detections', names='model', title='Top EV Models Detected')
 st.plotly_chart(fig_pie, use_container_width=True)
-
-# Notifications
-st.sidebar.subheader("Notifications")
-st.sidebar.info("New EV model detected")
-st.sidebar.info("Detection rate increased")
-st.sidebar.info("Weekly report available")
-
-# Search box in the sidebar
-st.sidebar.text_input("Search...", "")
 
 # ... (keep the existing custom CSS)
