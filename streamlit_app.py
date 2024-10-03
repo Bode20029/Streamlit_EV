@@ -1,99 +1,127 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
+import plotly.graph_objects as go
 import plotly.express as px
 from datetime import datetime, timedelta
 
 # Set page config
-st.set_page_config(page_title="Colorful Sales Dashboard", layout="wide")
+st.set_page_config(page_title="EV Detection Dashboard", layout="wide")
 
-# Custom CSS with vibrant colors
+# Custom CSS to change sidebar color and text color to black
 st.markdown("""
 <style>
-    .reportview-container {
-        background: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+    [data-testid="stSidebar"] {
+        background-color: #4ade80;
     }
-    .big-font {
-        font-size: 36px !important;
-        font-weight: bold;
-        color: #FF6B6B;
-        text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+    [data-testid="stSidebar"] [data-testid="stMarkdownContainer"] p {
+        color: black;
     }
-    .stSelectbox > div > div {
-        background-color: #ffffff;
-        border-radius: 10px;
-        border: 2px solid #FF6B6B;
+    [data-testid="stSidebar"] .stButton>button {
+        color: black;
+        background-color: white;
+        border: 2px solid black;
     }
-    .stDateInput > div > div > input {
-        background-color: #ffffff;
-        border-radius: 10px;
-        border: 2px solid #FF6B6B;
+    [data-testid="stSidebar"] .stButton>button:hover {
+        background-color: rgba(0,0,0,0.1);
+        color: black;
+        border: 2px solid black;
     }
-    .stButton>button {
-        background-color: #FF6B6B;
-        color: white;
-        border-radius: 10px;
-        border: none;
-        padding: 10px 20px;
-        font-weight: bold;
+    [data-testid="stSidebar"] .stTextInput>div>div>input {
+        color: black;
+        background-color: white;
+        border-color: black;
     }
-    .stTab {
-        background-color: #4ECDC4;
-        color: white;
-        border-radius: 5px 5px 0 0;
+    [data-testid="stSidebar"] .stTextInput>div>div>input::placeholder {
+        color: rgba(0,0,0,0.7);
     }
 </style>
 """, unsafe_allow_html=True)
 
-# Title with colorful background
-st.markdown('<div style="background-color: #FFD93D; padding: 20px; border-radius: 15px;"><p class="big-font">แสดงผลการรุกล้ำ</p></div>', unsafe_allow_html=True)
+# Function to generate random data
+def generate_data(start_date, end_date):
+    date_range = pd.date_range(start=start_date, end=end_date)
+    return pd.DataFrame({
+        'date': date_range,
+        'value': np.random.randint(50, 150, size=len(date_range))
+    })
 
-# Tabs with custom styling
-tab1, tab2 = st.tabs(["🏠 อยู่มุมขวาบน", "📅 อยู่มุมขวาเดือน/ปี"])
+# Sidebar
+st.sidebar.title("Navigation")
+st.sidebar.button("Home")
+st.sidebar.button("Messages")
+st.sidebar.button("Favorites")
+st.sidebar.button("Settings")
+st.sidebar.button("Logout")
 
-with tab1:
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        start_date = st.date_input("เลือกวันที่", value=datetime(2024, 4, 5))
-    with col2:
-        time_range = st.selectbox("เลือกช่วงเวลา", ["เลือกช่วงเวลา", "ช่วงเวลาอื่นๆ"])
+# Main content
+st.title("EV Detection Dashboard")
 
-    col3, col4 = st.columns(2)
-    
-    with col3:
-        selected_date = st.date_input("เลือกวัน", value=datetime(2024, 4, 5))
-    with col4:
-        end_time = st.selectbox("เลือกช่วงเวลาที่สุด", ["ไม่มี"])
-
-# Generate sample data
-dates = pd.date_range(start=start_date, periods=24, freq='H')
-sales = [0] * 13 + [2, 4, 7, 19, 3, 7, 2] + [0] * 4
-df = pd.DataFrame({'time': dates, 'sales': sales})
-
-# Create the bar chart using Plotly with a vibrant color scheme
-fig = px.bar(df, x='time', y='sales', title=f'แสดงจำนวนการรุกล้ำของวันที่ {start_date.strftime("%Y-%m-%d")}')
-fig.update_layout(
-    plot_bgcolor='rgba(0,0,0,0)',
-    paper_bgcolor='rgba(0,0,0,0)',
-    font=dict(color='#333333', size=14),
-    title_font_size=24,
-    title_font_color='#FF6B6B',
-    xaxis=dict(title='Time', gridcolor='#DDDDDD', tickfont=dict(size=12)),
-    yaxis=dict(title='Count', gridcolor='#DDDDDD', tickfont=dict(size=12)),
+# Date range selector
+st.sidebar.subheader("Select Date Range")
+date_option = st.sidebar.selectbox(
+    "Choose a date range",
+    ("Custom", "Last 24 Hours", "Last 7 Days", "Last 14 Days", "Last 30 Days", "Last 6 Months")
 )
-fig.update_traces(marker_color='#6C5CE7', marker_line_color='#FF6B6B', marker_line_width=1.5, opacity=0.8)
 
-# Display the chart with a border
-st.markdown('<div style="border: 3px solid #FF6B6B; border-radius: 15px; padding: 10px; background-color: white;">', unsafe_allow_html=True)
-st.plotly_chart(fig, use_container_width=True)
-st.markdown('</div>', unsafe_allow_html=True)
+end_date = datetime.now()
 
-# Download button with custom styling
-st.markdown('<div style="display: flex; justify-content: center; margin-top: 20px;">', unsafe_allow_html=True)
-st.download_button("📥 ดาวน์โหลด ประวัติการรุกล้ำ", data="Sample data", file_name="sales_data.csv")
-st.markdown('</div>', unsafe_allow_html=True)
+if date_option == "Custom":
+    start_date = st.sidebar.date_input("Start date", end_date - timedelta(days=30))
+    end_date = st.sidebar.date_input("End date", end_date)
+    if start_date > end_date:
+        st.sidebar.error("Error: End date must be after start date.")
+else:
+    if date_option == "Last 24 Hours":
+        start_date = end_date - timedelta(hours=24)
+    elif date_option == "Last 7 Days":
+        start_date = end_date - timedelta(days=7)
+    elif date_option == "Last 14 Days":
+        start_date = end_date - timedelta(days=14)
+    elif date_option == "Last 30 Days":
+        start_date = end_date - timedelta(days=30)
+    else:  # Last 6 Months
+        start_date = end_date - timedelta(days=180)
 
-# Pagination with custom styling
-col5, col6, col7 = st.columns([1, 1, 1])
-with col6:
-    st.markdown('<div style="background-color: #4ECDC4; padding: 10px; border-radius: 10px; text-align: center; color: white; font-weight: bold;">1/2</div>', unsafe_allow_html=True)
+# Generate data based on selected date range
+df = generate_data(start_date, end_date)
+
+# Display metrics
+total_detections = df['value'].sum()
+avg_detections = df['value'].mean()
+st.metric("Total Detections", f"{total_detections:,}")
+st.metric("Average Daily Detections", f"{avg_detections:.2f}")
+
+# EV Detections Trend
+st.subheader("EV Detections Trend")
+fig_trend = px.line(df, x='date', y='value', title='EV Detections Over Time')
+fig_trend.update_traces(line_color="#4ade80")
+st.plotly_chart(fig_trend, use_container_width=True)
+
+# Monthly Comparison (if applicable)
+if (end_date - start_date).days >= 30:
+    st.subheader("Monthly Comparison")
+    df_monthly = df.set_index('date').resample('M').sum().reset_index()
+    fig_bar = px.bar(df_monthly, x='date', y='value', title='Monthly EV Detections')
+    fig_bar.update_traces(marker_color="#4ade80")
+    st.plotly_chart(fig_bar, use_container_width=True)
+
+# Top EV Models (placeholder data)
+st.subheader("Top EV Models")
+top_models = pd.DataFrame({
+    'model': ['Tesla Model 3', 'Nissan Leaf', 'Chevrolet Bolt', 'BMW i3'],
+    'detections': np.random.randint(100, 1000, size=4)
+})
+fig_pie = px.pie(top_models, values='detections', names='model', title='Top EV Models Detected')
+st.plotly_chart(fig_pie, use_container_width=True)
+
+# Notifications
+st.sidebar.subheader("Notifications")
+st.sidebar.info("New EV model detected")
+st.sidebar.info("Detection rate increased")
+st.sidebar.info("Weekly report available")
+
+# Search box in the sidebar
+st.sidebar.text_input("Search...", "")
+
+# ... (keep the existing custom CSS)
